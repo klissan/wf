@@ -1,0 +1,58 @@
+name: Collect JIRA tasks from commits and set them version
+
+on:
+  workflow_call:
+    inputs:
+      app_version:
+        description: "Application version"
+        required: true
+        type: string
+      app_name:
+        description: "Application name"
+        required: true
+        type: string
+    secrets:
+      JIRA_API_KEY:
+        required: true
+jobs:
+  find-issues-and-set-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Fetch all branches
+        run: |
+          git fetch origin 
+
+      - name: List branches
+        run: |
+          git branch -a
+
+      - name: Determine default branch
+        id: get_default_branch
+        run: |
+          default_branch=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
+          echo "DEFAULT_BRANCH=$default_branch" >> $GITHUB_ENV
+          
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Python dependencies
+        run: |
+          pip install requests  
+
+      - name: Run Python script to get commit messages
+        env:
+          APP_VERSION: ${{ inputs.app_version }} 
+          APP_NAME: ${{ inputs.app_name }} 
+          DEFAULT_BRANCH: ${{ env.DEFAULT_BRANCH }}
+          JIRA_API_KEY:  ${{ secrets.JIRA_API_KEY }}
+        id: run_script
+        run: |
+          python3 scripts/set-component-and-version.py        
