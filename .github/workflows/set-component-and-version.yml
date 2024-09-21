@@ -16,7 +16,7 @@ on:
         required: true
 jobs:
   find-issues-and-set-version:
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, docker-runner ]
 
     steps:
       - name: Checkout repository
